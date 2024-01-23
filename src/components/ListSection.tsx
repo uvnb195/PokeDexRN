@@ -1,4 +1,4 @@
-import React, {CSSProperties, useEffect, useState} from 'react';
+import React, {CSSProperties, memo, useEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -6,60 +6,78 @@ import {
   FlatList,
   Image,
   ImageSourcePropType,
+  Touchable,
+  TouchableOpacity,
 } from 'react-native';
 import {fetchPokemonImage, fetchPokemons} from '../../api/pokeApi';
 import {CircleSnail} from 'react-native-progress';
+import {useNavigation} from '@react-navigation/native';
+import {FlashList} from '@shopify/flash-list';
+import {pokemonImgFromId} from '../screens/Home';
+
+type Pokemon = {
+  name: string;
+  url: string;
+};
 
 interface ItemData {
-  title: string;
-  imageSource: ImageSourcePropType;
+  name: string;
+  url: string;
 }
 
 interface ItemProps {
   data: ItemData;
-  onPress: () => void;
+  onPress: (itemId: string, itemName: string) => void;
 }
-export const Item = (props: {name: string; url: string}) => {
+export const Item = (props: ItemProps) => {
+  const {data} = props;
   const [loadingImg, setLoadingImg] = useState(true);
-  const idFromUrl = props.url.slice(0, -1).split('/').pop();
+  const idFromUrl = data.url.slice(0, -1).split('/').pop();
   const toggleLoading = async () => {
     setTimeout(() => setLoadingImg(false), 1000);
   };
   return (
-    <View style={styles.itemSection}>
-      <View style={styles.itemContainer}>
-        <Image
-          source={{
-            uri: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${idFromUrl}.png`,
-          }}
-          style={styles.img}
-          resizeMode="center"
-          onLoadEnd={toggleLoading}
-        />
-        <Text>{props.name}</Text>
-      </View>
-      {loadingImg && (
-        <View
-          style={{
-            position: 'absolute',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#d9d9d9',
-            top: 0,
-            bottom: 0,
-            start: 0,
-            end: 0,
-            borderRadius: 50,
-          }}>
-          <CircleSnail color={['#ffcb05', '#385faa']} size={50} />
+    <TouchableOpacity
+      style={{flex: 1}}
+      onPress={() => props.onPress(idFromUrl + '', data.name)}>
+      <View style={styles.itemSection}>
+        <View style={styles.itemContainer}>
+          <Image
+            source={{
+              uri: pokemonImgFromId(idFromUrl || ''),
+            }}
+            style={styles.img}
+            resizeMode="center"
+            onLoadEnd={toggleLoading}
+          />
+          <Text>{data.name}</Text>
         </View>
-      )}
-    </View>
+        {loadingImg && (
+          <View
+            style={{
+              position: 'absolute',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#d9d9d9',
+              top: 0,
+              bottom: 0,
+              start: 0,
+              end: 0,
+              borderRadius: 50,
+            }}>
+            <CircleSnail color={['#ffcb05', '#385faa']} size={50} />
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 };
-const ListSection = () => {
+const ListSection = (props: {
+  onItemClick: (id: string, name: string) => void;
+}) => {
+  const navigation = useNavigation();
   const [currentLoad, setLoad] = useState(0);
-  const [pokemons, setPokemons] = useState<any[]>([]);
+  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
   const [loading, setLoading] = useState(false);
   const fetchPokemonsData = async (params: {offset: number; limit: number}) => {
     fetchPokemons(params).then(data => {
@@ -74,24 +92,26 @@ const ListSection = () => {
   useEffect(() => {
     setLoading(true);
     fetchPokemonsData({offset: currentLoad, limit: 20});
-
     setTimeout(() => setLoading(false), 1000);
   }, []);
+
+  const renderItem = (item: Pokemon) => (
+    <Item data={{name: item.name, url: item.url}} onPress={props.onItemClick} />
+  );
   return loading ? (
     <View style={styles.loadingContainer}>
       <CircleSnail color={['#ffcb05', '#385faa']} size={50} />
     </View>
   ) : (
-    <FlatList
+    <FlashList
       style={[styles.flatList]}
       horizontal={false}
       data={pokemons}
-      renderItem={({item, index}) => {
-        return <Item name={item.name} url={item.url} />;
-      }}
+      renderItem={({item}) => renderItem(item)}
       numColumns={3}
       onEndReached={loadMorePokemon}
       onEndReachedThreshold={0.5}
+      estimatedItemSize={200}
     />
   );
 };
@@ -99,7 +119,6 @@ const ListSection = () => {
 const styles = StyleSheet.create({
   flatList: {},
   itemSection: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -124,4 +143,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ListSection;
+export default memo(ListSection);

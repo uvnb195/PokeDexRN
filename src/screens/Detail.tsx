@@ -2,11 +2,30 @@ import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import FeatherIcons from 'react-native-vector-icons/Feather';
 import StatItem from '../components/StatItem';
+import {
+  ParamListBase,
+  RouteProp,
+  useNavigation,
+} from '@react-navigation/native';
+import {StackParams} from '../../App';
+import React from 'react';
+import {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
+import {pokemonImgFromId} from './Home';
 
-export default function Detail() {
+type DetailProps = NativeStackScreenProps<StackParams, 'Detail'>;
+
+const Detail: React.FC<DetailProps> = ({route}) => {
+  const {pokemonId, name} = route.params;
+  const navigation = useNavigation<NativeStackNavigationProp<StackParams>>();
   return (
     <View style={styles.container}>
-      <TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => {
+          navigation.popToTop();
+        }}>
         <FeatherIcons name="chevron-left" size={40} color={'black'} />
       </TouchableOpacity>
       <LinearGradient
@@ -16,10 +35,12 @@ export default function Detail() {
         <Image
           style={styles.img}
           source={{
-            uri: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
+            uri: pokemonImgFromId(pokemonId),
           }}
         />
-        <Text style={styles.text}>Pikachu</Text>
+        <Text style={styles.text}>
+          #{pokemonId} {name}
+        </Text>
         <StatItem color="#1E00FF" value={30} maxValue={100} key={1} delay={0} />
         <StatItem color="#0067FF" value={50} maxValue={100} key={2} delay={1} />
         <StatItem color="#008DFF" value={70} maxValue={100} key={3} delay={2} />
@@ -29,7 +50,7 @@ export default function Detail() {
       </LinearGradient>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {flex: 1, margin: 10},
@@ -45,7 +66,9 @@ const styles = StyleSheet.create({
     color: '#1e00ff',
   },
   img: {
-    width: 200,
-    height: 200,
+    width: 250,
+    height: 250,
   },
 });
+
+export default Detail;

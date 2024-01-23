@@ -1,10 +1,16 @@
 import React, {CSSProperties, useState} from 'react';
-import {StyleSheet, View, TextInput, TouchableOpacity} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ViewStyle,
+} from 'react-native';
 import FeatherIcons from 'react-native-vector-icons/Feather';
 
 interface SearchSectionProps {
   placeHolder: string;
-  style: CSSProperties;
+  style: ViewStyle;
   onChangeText: (value: string) => void;
 }
 
