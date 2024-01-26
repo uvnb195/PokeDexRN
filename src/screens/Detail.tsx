@@ -13,7 +13,7 @@ import {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import {pokemonImgFromId} from './Home';
+import {pokemonImgEndpoint} from '../../api/pokeApi';
 
 type DetailProps = NativeStackScreenProps<StackParams, 'Detail'>;
 
@@ -35,7 +35,7 @@ const Detail: React.FC<DetailProps> = ({route}) => {
         <Image
           style={styles.img}
           source={{
-            uri: pokemonImgFromId(pokemonId),
+            uri: pokemonImgEndpoint(pokemonId),
           }}
         />
         <Text style={styles.text}>

@@ -3,8 +3,11 @@ import axios from 'axios';
 const pokemonsEndpoint = (params: {offset: number; limit: number}) =>
   `https://pokeapi.co/api/v2/pokemon/?offset=${params.offset}&limit=${params.limit}`;
 
-const pokemonImgEndpoint = (pokemonId: string) =>
+export const pokemonImgEndpoint = (pokemonId: string) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`;
+
+const pokemonDetailEndpoint = (name: string) =>
+  `https://pokeapi.co/api/v2/pokemon/${name}`;
 
 const apiCall = async (endpoint: string) => {
   const option = {
@@ -23,5 +26,6 @@ const apiCall = async (endpoint: string) => {
 export const fetchPokemons = (params: {offset: number; limit: number}) =>
   apiCall(pokemonsEndpoint(params));
 
-export const fetchPokemonImage = (pokemonId: string) =>
-  apiCall(pokemonImgEndpoint(pokemonId));
+export const fetchPokemonDetail = (name: string) => {
+  apiCall(pokemonDetailEndpoint(name));
+};

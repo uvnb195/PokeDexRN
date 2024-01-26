@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import SearchSection from '../components/SearchSection';
 import ListSection, {/*ListSection,*/ Item} from '../components/ListSection';
-import {useEffect, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import {fetchPokemons} from '../../api/pokeApi';
 import {Pokemon} from '../../api/data';
 import {
@@ -22,29 +22,77 @@ import {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-
-export const pokemonImgFromId = (id: string) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {CircleSnail} from 'react-native-progress';
 
 function Home() {
   const navigation = useNavigation<NativeStackNavigationProp<StackParams>>();
+  const [loading, setLoading] = useState(true);
+  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
+  let pokemonsCache: Pokemon[] = [];
+  const getPokemonsFromLocal = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('pokemons');
+      if (jsonValue != null) {
+        setPokemons(JSON.parse(jsonValue));
+      } else {
+        const pokemons = await fetchPokemons({offset: 0, limit: 10000});
+        const jsonData = JSON.stringify(pokemons.results);
+        await AsyncStorage.setItem('pokemons', jsonData);
+        setPokemons(pokemons.results);
+      }
+    } catch (error) {
+      console.log('Error getting pokemons from AsyncStorage.');
+    }
+  };
+  useEffect(() => {
+    getPokemonsFromLocal();
+    setTimeout(() => setLoading(false), 1000);
+  }, []);
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 1000);
+  }, [pokemons]);
+
+  const handleSearch = (value: string) => {
+    if (value.length > 0) {
+      const searchList = pokemons.filter(item => item.name.includes(value));
+      setPokemons(prevState => {
+        pokemonsCache = prevState;
+        return [...searchList];
+      });
+    } else {
+      pokemonsCache.length > 0 && setPokemons(prevState => [...pokemonsCache]);
+      pokemonsCache = [];
+    }
+  };
   return (
     <SafeAreaView style={{flex: 1, padding: 16, rowGap: 50}}>
-      <SearchSection
-        style={styles.searchContainer}
-        placeHolder="Search Something"
-        onChangeText={value => {
-          console.log(value);
-        }}
-      />
-      <ListSection
-        onItemClick={(id, name) =>
-          navigation.navigate('Detail', {
-            pokemonId: id,
-            name: name,
-          })
-        }
-      />
+      {pokemons.length > 0 || pokemonsCache.length > 0 ? (
+        <SearchSection
+          style={styles.searchContainer}
+          placeHolder="Search Something"
+          onChangeText={value => {
+            setLoading(true);
+            handleSearch(value);
+          }}
+        />
+      ) : null}
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <CircleSnail size={50} color={['blue']} />
+        </View>
+      ) : (
+        <ListSection
+          list={pokemons}
+          onItemClick={(id, name) =>
+            navigation.navigate('Detail', {
+              pokemonId: id,
+              name: name,
+            })
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -54,6 +102,11 @@ const styles = StyleSheet.create({
   flatList: {
     flex: 1,
     backgroundColor: 'yellow',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

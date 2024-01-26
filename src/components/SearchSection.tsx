@@ -1,4 +1,4 @@
-import React, {CSSProperties, useState} from 'react';
+import React, {CSSProperties, useCallback, useEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import FeatherIcons from 'react-native-vector-icons/Feather';
+import {debounce} from 'lodash';
 
 interface SearchSectionProps {
   placeHolder: string;
@@ -15,7 +16,11 @@ interface SearchSectionProps {
 }
 
 const SearchSection: React.FC<SearchSectionProps> = props => {
-  const [input, setInput] = useState<string>('');
+  const [input, setInput] = useState('');
+  const handleTextDebounce = useCallback(debounce(props.onChangeText, 500), []);
+  useEffect(() => {
+    handleTextDebounce(input);
+  }, [input]);
 
   return (
     <View style={[props.style, styles.container]}>
@@ -25,10 +30,9 @@ const SearchSection: React.FC<SearchSectionProps> = props => {
         value={input}
         onChangeText={value => {
           setInput(value);
-          props.onChangeText(value);
         }}
       />
-      <TouchableOpacity style={styles.icon}>
+      <TouchableOpacity style={styles.icon} onPress={() => setInput('')}>
         <FeatherIcons name="x" size={24} color={'rgba(0, 0, 0, 0.5)'} />
       </TouchableOpacity>
     </View>

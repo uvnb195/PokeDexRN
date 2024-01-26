@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Detail from './src/screens/Detail';
 import Home from './src/screens/Home';
 import {SafeAreaView} from 'react-native';
